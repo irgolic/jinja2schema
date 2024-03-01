@@ -425,6 +425,13 @@ def visit_call(ast, ctx, macroses=None, config=default_config):
                                            config=config)
                 struct = merge(struct, arg_struct)
             return List(String()), struct
+        if ast.node.attr in ('strip', 'lstrip', 'rstrip'):
+            ctx.meet(String(), ast)
+            rtype, struct = visit_expr(
+                    ast.node.node,
+                    Context(predicted_struct=String.from_ast(ast.node.node, order_nr=config.ORDER_OBJECT.get_next())),
+                    macroses, config=config)
+            return String(), struct
         raise InvalidExpression(ast, '"{0}" call is not supported'.format(ast.node.attr))
 
 
