@@ -1,6 +1,8 @@
 # coding: utf-8
 from jinja2 import nodes
 import pytest
+from jinja2schema.visitors.stmt import visit_for
+
 from jinja2schema import InvalidExpression
 
 from jinja2schema.config import Config
@@ -79,13 +81,10 @@ def test_getattr_3():
     expected_struct = Dictionary({
         'a': List(
             List(
-                List(
-                    Dictionary({
-                        'x': Scalar(label='x', linenos=[2])
-                    }, linenos=[2]),
-                    linenos=[2]),
-                linenos=[1]
-            ),
+                Dictionary({
+                    'x': Scalar(label='x', linenos=[2])
+                }, linenos=[2]),
+                linenos=[1]),
             label='a',
             linenos=[1]
         ),
@@ -182,6 +181,15 @@ def test_slice():
         'xs': List(Scalar(linenos=[1]), label='xs', linenos=[1]),
         'a': Number(label='a', linenos=[1]),
         'b': Number(label='b', linenos=[1]),
+    })
+
+
+def test_slice_loop():
+    template = '''{% for x in xs[-5:] %}{{ x }}{% endfor %}'''
+    ast = parse(template).find(nodes.For)
+    struct = visit_for(ast)
+    assert struct == Dictionary({
+        'xs': List(Scalar(label="x", linenos=[1]), label='xs', linenos=[1]),
     })
 
 

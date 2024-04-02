@@ -261,7 +261,11 @@ def visit_getitem(ast, ctx, macroses=None, config=default_config):
             raise InvalidExpression(arg, '{0} is not supported as an index for a list or'
                                          ' a key for a dictionary'.format(arg.value))
     elif isinstance(arg, nodes.Slice):
-        predicted_struct = List.from_ast(ast, ctx.get_predicted_struct(), order_nr=config.ORDER_OBJECT.get_next())
+        predicted_struct = ctx.get_predicted_struct()
+        if isinstance(predicted_struct, List):
+            # unpack
+            predicted_struct = predicted_struct.item
+        predicted_struct = List.from_ast(ast, predicted_struct, order_nr=config.ORDER_OBJECT.get_next())
     else:
         if config.TYPE_OF_VARIABLE_INDEXED_WITH_VARIABLE_TYPE == 'list':
             predicted_struct = List.from_ast(ast, ctx.get_predicted_struct(), order_nr=config.ORDER_OBJECT.get_next())

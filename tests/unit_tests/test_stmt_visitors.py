@@ -44,6 +44,22 @@ def test_for_2():
     assert struct == expected_struct
 
 
+def test_for_slice():
+    template = '''
+    {% for x in a.b[:2] %}
+        {{ x }}
+    {% endfor %}
+    '''
+    ast = parse(template).find(nodes.For)
+    struct = visit_for(ast)
+    expected_struct = Dictionary({
+        'a': Dictionary({
+            'b': List(Scalar(label='x', linenos=[3]), label='b', linenos=[2])
+        }, label='a', linenos=[2]),
+    })
+    assert struct == expected_struct
+
+
 def test_for_3():
     template = '''
     {% for a, b in list %}
