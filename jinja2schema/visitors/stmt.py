@@ -212,6 +212,11 @@ def visit_extends(ast, macroses=None, config=default_config, child_blocks=None):
     return visit_many(get_correct_nodes(child_blocks, template.body), None, config)
 
 
+@visits_stmt(nodes.Break)
+def visit_break(*args, **kwargs):
+    return Dictionary()
+
+
 def get_inherited_template(config, ast):
     env = Environment(loader=PackageLoader(config.PACKAGE_NAME, config.TEMPLATE_DIR))
     return env.parse(env.loader.get_source(env, ast.template.value)[0])
