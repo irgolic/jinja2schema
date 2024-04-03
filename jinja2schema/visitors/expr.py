@@ -436,6 +436,13 @@ def visit_call(ast, ctx, macroses=None, config=default_config):
                     Context(predicted_struct=String.from_ast(ast.node.node, order_nr=config.ORDER_OBJECT.get_next())),
                     macroses, config=config)
             return String(), struct
+        if ast.node.attr == 'append':
+            ctx.meet(List(Unknown()), ast)
+            rtype, struct = visit_expr(
+                    ast.node.node,
+                    Context(predicted_struct=List(Unknown(), order_nr=config.ORDER_OBJECT.get_next())),
+                    macroses, config=config)
+            return List(Unknown()), struct
         raise InvalidExpression(ast, '"{0}" call is not supported'.format(ast.node.attr))
 
 

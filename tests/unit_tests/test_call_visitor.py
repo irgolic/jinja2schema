@@ -11,6 +11,9 @@ from jinja2schema.visitors.expr import visit_call, Context
 def get_scalar_context(ast):
     return Context(return_struct_cls=Scalar, predicted_struct=Scalar.from_ast(ast))
 
+def get_list_context(ast):
+    return Context(return_struct_cls=List, predicted_struct=List.from_ast(ast, Unknown()))
+
 
 def test_range_call():
     template = '{{ range(n) }}'
@@ -91,6 +94,19 @@ def test_str_method_calls():
     })
     assert struct == expected_struct
 
+
+def test_list_method_calls():
+    template = '''{{ x.append(1) }}'''
+    call_ast = parse(template).find(nodes.Call)
+    rtype, struct = visit_call(call_ast, get_list_context(call_ast))
+
+    expected_rtype = List(Unknown())
+    assert rtype == expected_rtype
+
+    expected_struct = Dictionary({
+        'x': List(Unknown(), label="x", linenos=[]),
+    })
+    assert struct == expected_struct
 
 
 def test_raise_on_unknown_call():
