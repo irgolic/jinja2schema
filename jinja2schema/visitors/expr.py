@@ -185,8 +185,8 @@ def _visit_dict(ast, ctx, macroses, items, config=default_config):
 def visit_bin_expr(ast, ctx, macroses=None, config=default_config):
     l_rtype, l_struct = visit_expr(ast.left, ctx, macroses, config=config)
     r_rtype, r_struct = visit_expr(ast.right, ctx, macroses, config=config)
-    rv = merge_bool_expr_structs(l_struct, r_struct)
-    return merge_rtypes(l_rtype, r_rtype, operator=ast.operator), rv
+    rv = merge_bool_expr_structs(l_struct, r_struct, keep_fst_unknown=True)
+    return merge_rtypes(l_rtype, r_rtype, operator=ast.operator, keep_fst_unknown=True), rv
 
 
 @visits_expr(nodes.UnaryExpr)

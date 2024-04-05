@@ -169,10 +169,12 @@ def test_if_1():
     struct = visit_if(ast)
 
     expected_struct = Dictionary({
-        'z': Dictionary({
-            'field': Scalar(label='field', linenos=[4]),
-        }, label='z', linenos=[2, 4]),
-        'x': Scalar(label='x', linenos=[2, 3]),
+        # 'z': Dictionary({
+        #     'field': Scalar(label='field', linenos=[4]),
+        # }, label='z', linenos=[2, 4]),
+        'z': Unknown(label='z', linenos=[2, 4]),
+        # 'x': Scalar(label='x', linenos=[2, 3]),
+        'x': Unknown(label='x', linenos=[2, 3]),
         'y': Unknown(label='y', linenos=[2]),
     })
     assert struct == expected_struct

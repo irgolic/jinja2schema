@@ -11,7 +11,7 @@ from .exceptions import MergeException
 from ._compat import zip_longest
 
 
-def merge(fst, snd, custom_merger=None):
+def merge(fst, snd, custom_merger=None, keep_fst_unknown=False):
     """Merges two variables.
 
     :param fst: first variable
@@ -30,7 +30,9 @@ def merge(fst, snd, custom_merger=None):
     #         (fst.linenos == snd.linenos) or  # TODO this is a hack
     #         max(fst.linenos) <= min(snd.linenos))
 
-    if isinstance(fst, Unknown):
+    if keep_fst_unknown and isinstance(fst, Unknown):
+        result = fst.clone()
+    elif isinstance(fst, Unknown):
         result = snd.clone()
     elif isinstance(snd, Unknown):
         result = fst.clone()
@@ -47,20 +49,20 @@ def merge(fst, snd, custom_merger=None):
         result = Dictionary()
         for k in set(itertools.chain(fst.iterkeys(), snd.iterkeys())):
             if k in fst and k in snd:
-                result[k] = merge(fst[k], snd[k], custom_merger=custom_merger)
+                result[k] = merge(fst[k], snd[k], custom_merger=custom_merger, keep_fst_unknown=keep_fst_unknown)
             elif k in fst:
                 result[k] = fst[k].clone()
             elif k in snd:
                 result[k] = snd[k].clone()
     elif isinstance(fst, List) and isinstance(snd, List):
-        result = List(merge(fst.item, snd.item, custom_merger=custom_merger))
+        result = List(merge(fst.item, snd.item, custom_merger=custom_merger, keep_fst_unknown=keep_fst_unknown))
     elif isinstance(fst, Tuple) and isinstance(snd, Tuple):
         if fst.items is snd.items is None:
             result = Tuple(None)
         else:
             if len(fst.items) != len(snd.items) and not (fst.may_be_extended or snd.may_be_extended):
                 raise MergeException(fst, snd)
-            result = Tuple([merge(a, b, custom_merger=custom_merger)
+            result = Tuple([merge(a, b, custom_merger=custom_merger, keep_fst_unknown=keep_fst_unknown)
                             for a, b in zip_longest(fst.items, snd.items, fillvalue=Unknown())])
     else:
         raise MergeException(fst, snd)
@@ -79,24 +81,24 @@ def merge(fst, snd, custom_merger=None):
     return result
 
 
-def merge_many(fst, snd, *args):
-    struct = merge(fst, snd)
+def merge_many(fst, snd, *args, keep_fst_unknown=False):
+    struct = merge(fst, snd, keep_fst_unknown=keep_fst_unknown)
     if args:
-        return merge_many(struct, *args)
+        return merge_many(struct, *args, keep_fst_unknown=keep_fst_unknown)
     else:
         return struct
 
 
-def merge_bool_expr_structs(fst, snd, operator=None):
+def merge_bool_expr_structs(fst, snd, keep_fst_unknown=False):
     def merger(fst, snd, result):
         result.checked_as_defined = fst.checked_as_defined
         result.checked_as_undefined = fst.checked_as_undefined and snd.checked_as_undefined
         return result
-    return merge(fst, snd, custom_merger=merger)
+    return merge(fst, snd, custom_merger=merger, keep_fst_unknown=keep_fst_unknown)
 
 
-def merge_rtypes(fst, snd, operator=None):
+def merge_rtypes(fst, snd, operator=None, keep_fst_unknown=False):
     if operator in ('+', '-'):
         if type(fst) is not type(snd) and not (isinstance(fst, Unknown) or isinstance(snd, Unknown)):
             raise MergeException(fst, snd)
-    return merge(fst, snd)
+    return merge(fst, snd, keep_fst_unknown=keep_fst_unknown)

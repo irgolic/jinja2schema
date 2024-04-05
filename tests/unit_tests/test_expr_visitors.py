@@ -1,12 +1,12 @@
 # coding: utf-8
 from jinja2 import nodes
 import pytest
-from jinja2schema.visitors.stmt import visit_for
+from jinja2schema.visitors.stmt import visit_for, visit_if, visit_assign
 
 from jinja2schema import InvalidExpression
 
 from jinja2schema.config import Config
-from jinja2schema.core import parse
+from jinja2schema.core import parse, infer
 from jinja2schema.visitors.expr import (Context, visit_getitem, visit_cond_expr, visit_test,
                                         visit_getattr, visit_compare, visit_const)
 from jinja2schema.model import Dictionary, Scalar, List, Unknown, Number, Boolean, Tuple
@@ -232,6 +232,34 @@ def test_test_2():
     with pytest.raises(InvalidExpression) as e:
         visit_test(ast, get_scalar_context(ast))
     assert 'line 1: unknown test "unknown_filter"' in str(e.value)
+
+
+def test_test_3():
+    template = '''{% set test = x is string %}'''
+    ast = parse(template).find(nodes.Assign)
+    struct = visit_assign(ast)
+    assert struct == Dictionary({
+        'test': Boolean(label='test', constant=True, linenos=[1]),
+        'x': Unknown(label='x', linenos=[1]),
+    })
+
+
+def test_if_test():
+    template = '''{% if x is string %}{% endif %}'''
+    ast = parse(template).find(nodes.If)
+    struct = visit_if(ast)
+    assert struct == Dictionary({
+        'x': Unknown(label='x', linenos=[1]),
+    })
+
+    template = '''{% if x is string %}{{ x }}{% endif %}'''
+    ast = parse(template).find(nodes.If)
+    struct = visit_if(ast)
+    assert struct == Dictionary({
+        # it didn't make sense that what happens inside the body changes the expected struct
+        # 'x': Scalar(label='x', linenos=[1]),
+        'x': Unknown(label='x', linenos=[1]),
+    })
 
 
 def test_compare():

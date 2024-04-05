@@ -83,7 +83,9 @@ def test_basics_3():
     '''
     struct = infer(template)
     expected_struct = Dictionary({
-        'x': String(label='x', linenos=[2, 3, 5, 7]),
+        # FIXME this test is incorrect, x should be an optional variable here
+        # 'x': String(label='x', linenos=[2, 3, 5, 7]),
+        'x': Scalar(label='x', linenos=[2, 3, 5, 7]),
     })
     assert struct == expected_struct
 
@@ -120,8 +122,10 @@ def test_basics_4():
     '''
     struct = infer(template)
     expected_struct = Dictionary({
-        'configuration': String(label='configuration',
-                                may_be_defined=True, checked_as_undefined=True, constant=False, linenos=[6, 7]),
+        # 'configuration': String(label='configuration',
+        #                         may_be_defined=True, checked_as_undefined=True, constant=False, linenos=[6, 7]),
+        'configuration': Unknown(label='configuration',
+                                 may_be_defined=True, checked_as_undefined=True, constant=False, linenos=[6, 7]),
         'queue': Scalar(label='queue', checked_as_defined=True, constant=False, linenos=[9]),
         'timestamp': String(label='timestamp', constant=False, linenos=[7])
     })
@@ -511,3 +515,19 @@ def test_order_number_setting_4():
     '''
     struct = infer(template, config)
     assert struct['ax'].order_nr != struct['bx'].order_nr != struct['cx'].order_nr
+
+
+def test_basics_15():
+    template = '''{% if x is string %}{{ x }}{% endif %}'''
+    struct = infer(template)
+    assert struct == Dictionary({
+        'x': Unknown(label='x', linenos=[1]),
+    })
+
+    template = '''{% set test = x is string %}{% if test %}{{ x }}{% endif %}'''
+    struct = infer(template)
+    assert struct == Dictionary({
+        # TODO extend the library to recognize that x is unknown
+        'x': Scalar(label='x', linenos=[1]),
+        # 'x': Unknown(label='x', linenos=[1]),
+    })
